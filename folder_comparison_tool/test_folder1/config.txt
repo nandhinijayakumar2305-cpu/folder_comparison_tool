@@ -1,0 +1,3 @@
+version=1.0
+env=staging
+debug=true

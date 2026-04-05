@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Folder Comparison Tool</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p class="loading-text">⏳ Analyzing folders... Please wait...</p>
+    </div>
+
+    <!-- Hero Section -->
+    <div class="hero">
+        <div class="hero-card">
+
+            <div class="logo">
+                <div class="icon">📁</div>
+                <h1>AI Folder Comparison Tool</h1>
+                <p>Intelligent folder analysis powered by AI</p>
+            </div>
+
+            {% if error %}
+            <div class="error-box">{{ error }}</div>
+            {% endif %}
+
+            <form method="POST" action="/compare" onsubmit="showLoading()">
+
+                <div class="form-group">
+                    <label>📂 Source Folder Path (Folder 1)</label>
+                    <input type="text" name="folder1"
+                        placeholder="e.g. C:\Users\you\release_v1"
+                        required />
+                    <p class="hint">Enter the full path of your first folder</p>
+                </div>
+
+                <div class="form-group">
+                    <label>📂 Target Folder Path (Folder 2)</label>
+                    <input type="text" name="folder2"
+                        placeholder="e.g. C:\Users\you\release_v2"
+                        required />
+                    <p class="hint">Enter the full path of your second folder</p>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    🚀 Start Comparison
+                </button>
+
+            </form>
+
+            <div class="features">
+    <div class="feature-item" onclick="showInfo('scan')">
+        🔍 Deep file scan
+    </div>
+    <div class="feature-item" onclick="showInfo('excel')">
+        📊 Excel comparison
+    </div>
+    <div class="feature-item" onclick="showInfo('ai')">
+        🤖 AI summary
+    </div>
+    <div class="feature-item" onclick="showInfo('export')">
+        📥 Export reports
+    </div>
+</div>
+
+<!-- Info Popup -->
+<div class="info-popup" id="infoPopup">
+    <div class="info-popup-content">
+        <button class="info-close" onclick="closeInfo()">✕</button>
+        <div class="info-icon" id="infoIcon"></div>
+        <h3 id="infoTitle"></h3>
+        <p id="infoDesc"></p>
+    </div>
+</div>
+
+        </div>
+    </div>
+
+    <script>
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+    </script>
+
+</body>
+</html>

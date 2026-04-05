@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparison Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<script>
+    function showLoading() {
+        document.getElementById('loadingOverlay').classList.add('active');
+    }
+
+    const infoData = {
+        scan: {
+            icon: "🔍",
+            title: "Deep File Scan",
+            desc: "Recursively scans all files inside both folders. Detects New, Deleted, Modified, and Renamed files using SHA-256 hash comparison. Works with any file type."
+        },
+        excel: {
+            icon: "📊",
+            title: "Excel Comparison",
+            desc: "Compares Excel files sheet by sheet. Detects added/removed sheets, column changes, row count differences, and cell-level value changes."
+        },
+        ai: {
+            icon: "🤖",
+            title: "AI Summary",
+            desc: "Uses Groq AI (LLaMA3) to generate a professional executive summary of all changes. Gives risk level (Low/Medium/High) and release recommendations."
+        },
+        export: {
+            icon: "📥",
+            title: "Export Reports",
+            desc: "Exports full comparison results as Excel report (6 sheets) and HTML report (color-coded dashboard). Both are downloadable instantly."
+        }
+    };
+
+    function showInfo(type) {
+        const data = infoData[type];
+        document.getElementById('infoIcon').innerText = data.icon;
+        document.getElementById('infoTitle').innerText = data.title;
+        document.getElementById('infoDesc').innerText = data.desc;
+        document.getElementById('infoPopup').classList.add('active');
+    }
+
+    function closeInfo() {
+        document.getElementById('infoPopup').classList.remove('active');
+    }
+
+    // Click outside popup to close
+    document.getElementById('infoPopup').addEventListener('click', function(e) {
+        if (e.target === this) closeInfo();
+    });
+</script>
+<body>
+
+    <!-- Navbar -->
+    <div class="navbar">
+        <a href="/" class="brand">📁 AI Folder Comparison Tool</a>
+        <span class="version">v1.0</span>
+    </div>
+
+    <div class="container">
+
+        <!-- Header -->
+        <div class="results-header">
+            <h1>📊 Comparison Results</h1>
+            <p>AI-Powered Folder Analysis Complete</p>
+        </div>
+
+        <!-- Folder Info -->
+        <div class="folders-info">
+            📂 <b>Folder 1:</b> {{ folder1 }} &nbsp;|&nbsp;
+            📂 <b>Folder 2:</b> {{ folder2 }}
+        </div>
+
+        <!-- Button Row -->
+        <div class="btn-row">
+            <a href="/" class="btn btn-back">⬅ New Comparison</a>
+            {% if excel_report and not excel_report.startswith('Error') %}
+            <a href="/download/{{ excel_report }}" class="btn btn-excel">
+                📥 Download Excel Report
+            </a>
+            {% endif %}
+            {% if html_report and not html_report.startswith('Error') %}
+            <a href="/download/{{ html_report }}" class="btn btn-html">
+                🌐 Download HTML Report
+            </a>
+            {% endif %}
+        </div>
+
+        <!-- Stat Cards -->
+        <div class="stats-grid">
+            <div class="stat-card card-new">
+                <h2>{{ result.new | length }}</h2>
+                <p>🆕 New Files</p>
+            </div>
+            <div class="stat-card card-deleted">
+                <h2>{{ result.deleted | length }}</h2>
+                <p>🗑️ Deleted Files</p>
+            </div>
+            <div class="stat-card card-modified">
+                <h2>{{ result.modified | length }}</h2>
+                <p>✏️ Modified Files</p>
+            </div>
+            <div class="stat-card card-renamed">
+                <h2>{{ result.renamed | length }}</h2>
+                <p>🔄 Renamed Files</p>
+            </div>
+        </div>
+
+        <!-- AI Summary -->
+        <div class="card">
+            <h3>🤖 AI Impact Summary</h3>
+            <div class="ai-box">{{ ai_summary }}</div>
+        </div>
+
+        <!-- New Files -->
+        <div class="card">
+            <h3>🆕 New Files ({{ result.new | length }})</h3>
+            {% if result.new %}
+            <ul class="file-list">
+                {% for f in result.new %}
+                <li>{{ f }}</li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="none-msg">No new files found.</p>
+            {% endif %}
+        </div>
+
+        <!-- Deleted Files -->
+        <div class="card">
+            <h3>🗑️ Deleted Files ({{ result.deleted | length }})</h3>
+            {% if result.deleted %}
+            <ul class="file-list">
+                {% for f in result.deleted %}
+                <li>{{ f }}</li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="none-msg">No deleted files found.</p>
+            {% endif %}
+        </div>
+
+        <!-- Modified Files -->
+        <div class="card">
+            <h3>✏️ Modified Files ({{ result.modified | length }})</h3>
+            {% if result.modified %}
+            <ul class="file-list">
+                {% for f in result.modified %}
+                <li>{{ f }}</li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="none-msg">No modified files found.</p>
+            {% endif %}
+        </div>
+
+        <!-- Renamed Files -->
+        <div class="card">
+            <h3>🔄 Renamed Files ({{ result.renamed | length }})</h3>
+            {% if result.renamed %}
+            <ul class="file-list">
+                {% for r in result.renamed %}
+                <li>{{ r.original }} → {{ r.renamed_to }}</li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="none-msg">No renamed files detected.</p>
+            {% endif %}
+        </div>
+
+        <!-- Excel Differences -->
+        <div class="card">
+            <h3>📋 Excel Differences</h3>
+            {% if excel_diffs %}
+                {% for item in excel_diffs %}
+                <div class="excel-file-block">
+                    <h4>📄 {{ item.file }}</h4>
+                    {% if item.diff.differences %}
+                        {% for d in item.diff.differences %}
+                        <div class="diff-item">
+                            <b>{{ d.type }}:</b> {{ d.detail }}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="none-msg">No cell-level differences found.</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="none-msg">No Excel files were modified.</p>
+            {% endif %}
+        </div>
+
+    </div>
+
+</body>
+</html>
